@@ -1,6 +1,1 @@
-
-         AJUDA:          
-
-d = deletar linha        
-u = modo de atualização  
-i = inserir nova linha   
+d = deletar linha  |   u = modo de atualização   |   i = inserir nova linha   

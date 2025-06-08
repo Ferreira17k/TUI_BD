@@ -15,10 +15,10 @@ class TableApp(App):
     CSS = """
     Screen {
         align: center middle;
-        layers: content hint;
+        layers: hint content;
     }
 
-    Vertical {
+    #vertical-1 {
         layer: content;
         width: 80%;
         height: auto;
@@ -34,15 +34,14 @@ class TableApp(App):
     }
 
     #tutor {
-        layer: hint;
-        width: 100%;
-        position: absolute;
-        content-align: right top;
+        margin-top: 2;
+        width: 80%;
+        content-align: center bottom;
         color: gray;
+        layer: content;
     }
 
     DataTable {
-        margin-top: 2;
         content-align: center middle;
         height: 20;
         width: 80%;
@@ -52,11 +51,12 @@ class TableApp(App):
 
 
     def compose(self) -> ComposeResult:
-        yield Label(read_file("tutor.txt"), id="tutor")
         yield Vertical(
             Label(read_file("ascii_art.txt"), id="title"),
             Input(placeholder="Escreva a sua query SQL aqui", id="main-input"),
+            id = "vertical-1"
         )
+        yield Label(read_file("tutor.txt"), id="tutor")
         yield DataTable()
 
 
