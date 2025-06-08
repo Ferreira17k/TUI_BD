@@ -2,7 +2,6 @@ from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Label
 from textual.containers import Vertical
 from confirmation_dialog import *
-from connect import *
 import crud
 
 class TableApp(App):
@@ -12,7 +11,7 @@ class TableApp(App):
         self.confirming_delete = False
      
     def make_table(self, select="select * from experience;"):
-        conn = get_connection()
+        conn = crud.get_connection()
         cur = conn.cursor()
         data_table = []
 
