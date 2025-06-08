@@ -1,15 +1,65 @@
 from textual.app import App, ComposeResult
-from textual.widgets import DataTable, Label
+from textual.widgets import DataTable, Label, Input
 from textual.containers import Vertical
-from confirmation_dialog import *
 import crud
 
-class TableApp(App):
+from confirmation_dialog import ConfirmationDialog
 
-    def __init__(self):
-        super().__init__()
-        self.confirming_delete = False
-     
+
+def read_file(path):
+    with open(path, "r") as f:
+        return f.read()
+
+
+class TableApp(App):
+    CSS = """
+    Screen {
+        align: center middle;
+        layers: content hint;
+    }
+
+    Vertical {
+        layer: content;
+        width: 80%;
+        height: auto;
+        grid-gutter: 1;
+        layout: grid;
+    }
+
+    #title {
+        color: yellow;
+        width: 100%;
+        min-width: 100;
+        content-align: center middle;
+    }
+
+    #tutor {
+        layer: hint;
+        width: 100%;
+        position: absolute;
+        content-align: right top;
+        color: gray;
+    }
+
+    DataTable {
+        margin-top: 2;
+        content-align: center middle;
+        height: 20;
+        width: 80%;
+        layer: content;
+    }
+    """
+
+
+    def compose(self) -> ComposeResult:
+        yield Label(read_file("tutor.txt"), id="tutor")
+        yield Vertical(
+            Label(read_file("ascii_art.txt"), id="title"),
+            Input(placeholder="Escreva a sua query SQL aqui", id="main-input"),
+        )
+        yield DataTable()
+
+
     def make_table(self, select="select * from experience;"):
         conn = crud.get_connection()
         cur = conn.cursor()
@@ -22,9 +72,6 @@ class TableApp(App):
         cur.close()
         conn.close()
         return data_table
-
-    def compose(self) -> ComposeResult:
-        yield DataTable()
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
@@ -62,7 +109,7 @@ class TableApp(App):
                 table.add_columns(*[f"Column {i+1}" for i in range(len(dtable[0]))])
                 table.add_rows(dtable)
     
-        elif event.key == "d" and not self.confirming_delete:
+        elif event.key == "d":
             self.confirming_delete = True
             table.cursor_type = "row"  
             self.push_screen(
@@ -73,13 +120,11 @@ class TableApp(App):
                 ),
                 self.delete_row
             )
+                                        
+   
 
-                                           
-        elif event.key == "n" and self.confirming_delete:
-            self.confirming_delete = False
-            table.cursor_type = 'cell'
 
 if __name__ == "__main__":
     app = TableApp()
     app.run()
-   
+
