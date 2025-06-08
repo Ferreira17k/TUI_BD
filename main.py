@@ -60,7 +60,9 @@ class TableApp(App):
         yield DataTable()
 
 
-    def make_table(self, select="select * from experience;"):
+    def make_table(self):
+        select=f"select * from {self.cur_table};"
+
         conn = crud.get_connection()
         cur = conn.cursor()
         data_table = []
@@ -79,34 +81,40 @@ class TableApp(App):
     
     def delete_row(self, res):
         if res == "yes":
-            
             table = self.query_one(DataTable)
+
             selected_row = table.get_row_at(table.cursor_row)
             row_id = int(selected_row[0])               
-            
+           
+            try:  
+                crud.delete(self.cur_table, row_id)
+            except Exception as e:
+                self.notify(str(e), severity="error", timeout=7)
+                
             coord = table.cursor_coordinate
-            table.clear(columns=True)  
+            table.clear(columns=True)
             dtable = self.make_table()
                         
             if dtable:
-                table.add_columns(*[f"Column {i+1}" for i in range(len(dtable[0]))])
+                table.add_columns(*[e[0] for e in self.info[self.cur_table]])
                 table.add_rows(dtable)
         
             self.confirming_delete = False
             table.cursor_type = 'cell'
 
             table.cursor_coordinate = coord
-
-            crud.delete("experience", row_id)
+            
         
     def on_key(self, event):
         table = self.query_one(DataTable)
     
         if event.key == "1":
+            self.cur_table = "subtypeexperiencecategorizesexperience"
+            self.info = crud.get_info()
             dtable = self.make_table()
             table.clear(columns=True)  # Limpa colunas e dados
             if dtable:
-                table.add_columns(*[f"Column {i+1}" for i in range(len(dtable[0]))])
+                table.add_columns(*[e[0] for e in self.info[self.cur_table]])
                 table.add_rows(dtable)
     
         elif event.key == "d":
@@ -122,8 +130,6 @@ class TableApp(App):
             )
                                         
    
-
-
 if __name__ == "__main__":
     app = TableApp()
     app.run()

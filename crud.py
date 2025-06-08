@@ -1,4 +1,3 @@
-import pprint
 import psycopg2
 from psycopg2.extensions import connection as PGConnection
 
@@ -10,6 +9,7 @@ def get_connection() -> PGConnection:
         host="10.61.49.169",
         port="5432"
     )
+
 
 def get_columns(table_name: str, schema: str = 'public'):
     """
@@ -42,20 +42,15 @@ def delete(table_name, id, schema='public'):
     colunas = get_columns(table_name=table_name)
     id_column_name = colunas[0]
     valores = [id]
-    try:
-        query = f"DELETE FROM {schema}.{table_name} WHERE {id_column_name} = %s;"
+    query = f"DELETE FROM {schema}.{table_name} WHERE {id_column_name} = %s;"
 
-        with conn.cursor() as cur:
-            cur.execute(query, valores)
-            if cur.rowcount == 0:
-                print(f"Nenhuma linha foi deletada. ID {id} não foi encontrado.")
-            else:
-                conn.commit()
-                print(f"{cur.rowcount} linha(s) deletada(s) com sucesso.")
-    except Exception as e:
-        print("Erro ao deletar:", e)
-    finally:
-        conn.close()
+    with conn.cursor() as cur:
+        cur.execute(query, valores)
+        if cur.rowcount == 0:
+            print(f"Nenhuma linha foi deletada. ID {id} não foi encontrado.")
+        else:
+            conn.commit()
+            print(f"{cur.rowcount} linha(s) deletada(s) com sucesso.")
 
 
 def insert(table_name, dicio, schema='public'):
@@ -133,7 +128,7 @@ def update(table_name, id, values_dicio, schema='public'):
         conn.close()
 
 
-def get_table_columns_info(schema='public'):
+def get_info(schema='public'):
     """
     Retorna um dicionário com as tabelas do schema e suas colunas.
     Cada chave é o nome da tabela, e o valor é uma lista de tuplas contendo:
@@ -210,13 +205,5 @@ values_dicio = {
 # update(table_name, 30, values_dicio)
 # delete(table_name=table_name, id=30)
 
-tables_info = get_table_columns_info()
-
-for key, item in tables_info.items():
-    print('_'*100)
-    print()
-    print(f"Coluna {key}")
-    for column in item:
-        print(f"    {column}")
-    # pprint.pprint(f"{key}: {item}")
-    
+if __name__ == "__main__":
+    print(get_info())
