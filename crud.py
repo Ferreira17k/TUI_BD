@@ -207,5 +207,40 @@ def delete_2(table_name, dicio, schema='public'):
     conn.close()
 
 
+def create_index(table_name, column_names, index_name=None, unique=False, schema='public'):
+    """
+    Cria um índice em uma ou mais colunas de uma tabela.
+
+    Parâmetros:
+    - table_name (str): Nome da tabela onde o índice será criado.
+    - column_names (list[str]): Lista com os nomes das colunas que farão parte do índice.
+    - index_name (str, opcional): Nome do índice. Se não for fornecido, será gerado automaticamente.
+    - unique (bool, opcional): Se True, cria um índice UNIQUE. Padrão é False.
+    - schema (str, opcional): Nome do schema da tabela. Padrão é 'public'.
+
+    Exemplo:
+        create_index('users', ['email'], unique=True)
+        → cria um índice único na coluna "email" da tabela "users"
+    """
+
+    if index_name is None:
+        index_name = f"{table_name}_{'_'.join(column_names)}_idx"
+
+    cols_str = ', '.join(column_names)
+    unique_str = 'UNIQUE' if unique else ''
+    
+    query = f"""
+        CREATE {unique_str} INDEX IF NOT EXISTS {index_name}
+        ON {schema}.{table_name} ({cols_str});
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     print(get_info().keys())
