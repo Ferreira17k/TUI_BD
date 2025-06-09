@@ -81,37 +81,27 @@ def insert(table_name, dicio, schema='public'):
     conn.close()
 
 
-def update(table_name, id, values_dicio, schema='public'):
+def update(table_name, id, column_name, value, schema='public'):
     """
     Atualiza uma linha na tabela especificada com os valores fornecidos.
 
     Parâmetros:
     - table_name (str): nome da tabela onde a atualização será feita.
     - id: valor da chave primária para identificar a linha a ser atualizada.
-    - values_dicio (dict): dicionário com colunas que serão alteradas como chaves e novos valores como valores.
+    - column_name(str): Nome da coluna a ser editada
+    - value: Novo valor a ser atribuído
     - schema (str): esquema do banco de dados, padrão é 'public'.
-
-    Retorna:
-    - None. Imprime mensagens de sucesso ou erro.
     """
     conn = get_connection()
-    # Obtém os nomes das colunas da tabela
     colunas = get_columns(table_name=table_name)
     id_column_name = colunas[0]
 
-    set_clause = ", ".join([f"{col} = %s" for col in values_dicio.keys()])
-    query = f"UPDATE {schema}.{table_name} SET {set_clause} WHERE {id_column_name} = %s;"
-
-    valores = list(values_dicio.values()) + [id]
+    query = f"UPDATE {schema}.{table_name} SET {column_name} = %s WHERE {id_column_name} = %s;"
+    valores = list(value) + [id]
 
     with conn.cursor() as cur:
         cur.execute(query, valores)
-
-        if cur.rowcount == 0:
-            print(f"Nenhuma linha atualizada. ID {id} não encontrado.")
-        else:
-            conn.commit()
-            print(f"{cur.rowcount} linha(s) atualizada(s) com sucesso.")
+        conn.commit()
     conn.close()
 
 

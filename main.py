@@ -43,7 +43,7 @@ class TableApp(App):
     def select_changed(self, event: Select.Changed):
         self.cur_table = str(event.value)
 
-    
+    """
     def delete_row(self, res):
         if res == "yes":
             table = self.query_one(DataTable)
@@ -62,6 +62,45 @@ class TableApp(App):
             # reset cursor selection
             table.cursor_type = "cell"
             table.cursor_coordinate = cursor_pos
+    """
+
+    def delete_row(self, res):
+        if res == "yes":
+            table = self.query_one(DataTable)
+
+            row_values = table.get_row_at(table.cursor_row)  
+            columns = crud.get_columns(self.cur_table)  
+            dicio = {}
+            for index, column in enumerate(columns):
+                dicio[column] = row_values[index]          
+            try:
+                crud.delete_2(self.cur_table, dicio)
+                self.notify(f"1 linha deletadas")
+            except Exception as e:
+                self.notify(str(e), severity="error", timeout=7)
+            
+            cursor_pos = table.cursor_coordinate
+            self.query_bd()
+        
+            # reset cursor selection
+            table.cursor_type = "cell"
+            table.cursor_coordinate = cursor_pos
+
+
+    def create_index(self, res):
+        table = self.query_one(DataTable)
+
+        if res == "yes":
+            column_index = table.cursor_column
+            column_name = crud.get_columns(self.cur_table)[column_index]
+            try:
+                crud.create_index(self.cur_table, column_names=[column_name], unique=True)
+                self.notify(f"Índice criado para coluna '{column_name}'", severity="info")
+            except Exception as e:
+                self.notify(str(e), severity="error", timeout=7)
+        
+                    # reset cursor selection
+        table.cursor_type = "cell"
 
 
     def query_bd(self):
@@ -107,6 +146,14 @@ class TableApp(App):
 
         elif event.key == "x":
             table.cursor_type = "column"
+            self.push_screen(
+                ConfirmationDialog(
+                    "Tem certeza de que quer criar um índice?",
+                    "Sim",
+                    "Não"
+                ),
+                self.create_index
+            )
 
         elif event.key == "q":
             self.exit()
