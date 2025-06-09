@@ -1,1 +1,2 @@
-d = deletar linha  |   u = modo de atualização   |   i = inserir nova linha   
+d = deletar linha  |   u = atualizar campo   |   i = inserir nova linha   
+x = criar índice   |   r = consultar banco   |   q = sair
