@@ -7,7 +7,7 @@ def get_connection() -> PGConnection:
         user="tui",
         password="504",
         host="10.61.49.169",
-        port="5432"
+        port="3389"
     )
 
 
@@ -177,6 +177,14 @@ def get_info(schema='public'):
 
     finally:
         conn.close()
+
+
+def select(query: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+
+            return cur.fetchall()
 
 
 if __name__ == "__main__":

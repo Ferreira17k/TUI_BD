@@ -1,6 +1,7 @@
+from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import DataTable, Label, Input
-from textual.containers import Vertical
+from textual.widgets import DataTable, Label, Input, Select
+from textual.containers import Vertical, Horizontal
 import crud
 from confirmation_dialog import ConfirmationDialog
 
@@ -11,72 +12,27 @@ def read_file(path):
 
 
 class TableApp(App):
-    CSS = """
-    Screen {
-        align: center middle;
-        layers: hint content;
-    }
-
-    #vertical-1 {
-        layer: content;
-        width: 80%;
-        height: auto;
-        grid-gutter: 1;
-        layout: grid;
-    }
-
-    #title {
-        color: yellow;
-        width: 100%;
-        min-width: 100;
-        content-align: center middle;
-    }
-
-    #tutor {
-        margin-top: 2;
-        width: 80%;
-        content-align: center bottom;
-        color: gray;
-        layer: content;
-    }
-
-    DataTable {
-        content-align: center middle;
-        height: 20;
-        width: 80%;
-        layer: content;
-    }
-    """
-
+    CSS_PATH = "TableApp.css"
 
     def compose(self) -> ComposeResult:
         yield Vertical(
             Label(read_file("ascii_art.txt"), id="title"),
-            Input(placeholder="Escreva a sua query SQL aqui", id="main-input"),
+            Horizontal(
+                Label("\nSELECT * FROM "),
+                Select.from_values(["cu", "pinto"]),
+                Label("\n WHERE "),
+                Input(placeholder="Escreva seu filtro aqui", id="filter-input")
+            ),
             id = "vertical-1"
         )
         yield Label(read_file("tutor.txt"), id="tutor")
         yield DataTable()
 
 
-    def make_table(self):
-        select=f"select * from {self.cur_table};"
-
-        conn = crud.get_connection()
-        cur = conn.cursor()
-        data_table = []
-
-        cur.execute(select)
-        resultados = cur.fetchall()
-        data_table.extend(resultados)
-
-        cur.close()
-        conn.close()
-        return data_table
-
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
         table.cursor_type = 'cell'
+
     
     def delete_row(self, res):
         if res == "yes":
@@ -92,7 +48,7 @@ class TableApp(App):
             
             cursor_pos = table.cursor_coordinate
             table.clear(columns=True)
-            dtable = self.make_table()
+            dtable = crud.select(f"select * from {self.cur_table}")
             
             if dtable:
                 table.add_columns(*[e[0] for e in self.info[self.cur_table]])
@@ -101,20 +57,19 @@ class TableApp(App):
             # reset cursor selection
             table.cursor_type = 'cell'
             table.cursor_coordinate = cursor_pos
-            
-        
-    def on_key(self, event):
+
+
+    async def on_key(self, event):
         table = self.query_one(DataTable)
     
-        if event.key == "1":
-            self.cur_table = "subtypeexperiencecategorizesexperience"
+        if event.key == "r":
+            self.cur_table = "experience"
             self.info = crud.get_info()
-            dtable = self.make_table()
             table.clear(columns=True)  # Limpa colunas e dados
-            if dtable:
-                table.add_columns(*[e[0] for e in self.info[self.cur_table]])
-                table.add_rows(dtable)
-    
+            table.add_columns(*[e[0] for e in self.info[self.cur_table]])
+            table.add_rows(crud.select(f"select * from {self.cur_table}"))
+            self.notify("Buscando resultados...", timeout=1)
+   
         elif event.key == "d":
             table.cursor_type = "row"  
             self.push_screen(
@@ -125,6 +80,12 @@ class TableApp(App):
                 ),
                 self.delete_row
             )
+
+        elif event.key == "x":
+            table.cursor_type = "column"
+
+        elif event.key == "q":
+            self.exit()
                                         
    
 if __name__ == "__main__":
