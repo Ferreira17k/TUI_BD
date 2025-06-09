@@ -40,7 +40,7 @@ class TableApp(App):
 
 
     @on(Select.Changed)
-    def select_changed(self, event: Select.Changed) -> None:
+    def select_changed(self, event: Select.Changed):
         self.cur_table = str(event.value)
 
     
@@ -78,14 +78,16 @@ class TableApp(App):
         try:
             query_result = crud.select(query)
 
-            table.clear(columns=True)  # Limpa colunas e dados
-            table.add_columns(*[e[0] for e in self.info[self.cur_table]])
+            # Limpa o estado atual da tabela e o redefine
+            table.clear(columns=True)
+            column_names = [e[0] for e in self.info[self.cur_table]]
+            table.add_columns(*column_names)
             table.add_rows(query_result)
         except Exception as e:
             self.notify(str(e), severity="error", timeout=7)
         
 
-    async def on_key(self, event):
+    def on_key(self, event):
         table = self.query_one(DataTable)
     
         if event.key == "r":
@@ -108,8 +110,8 @@ class TableApp(App):
 
         elif event.key == "q":
             self.exit()
-                                        
-   
+
+
 if __name__ == "__main__":
     app = TableApp()
     app.run()
