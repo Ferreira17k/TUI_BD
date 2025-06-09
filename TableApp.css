@@ -12,7 +12,7 @@ Screen {
 }
 
 #title {
-    color: yellow;
+    color: cyan;
     width: 100%;
     min-width: 100;
     content-align: center middle;

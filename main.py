@@ -4,6 +4,7 @@ from textual.widgets import DataTable, Label, Input, Select
 from textual.containers import Vertical, Horizontal
 import crud
 from confirmation_dialog import ConfirmationDialog
+from update_modal import UpdateModal
 
 
 TABLE_NAMES = ["experience", "experiencepicture", "review", "reviewpicture", "schedule", "subtypeexperience", "subtypeexperiencecategorizesexperience", "userprofile"]
@@ -37,29 +38,15 @@ class TableApp(App):
         table.cursor_type = "cell"
         self.info = None
         self.cur_table = None
+        self.table_not_empty = False
+        self.modal_active = False
 
 
     @on(Select.Changed)
     def select_changed(self, event: Select.Changed):
-        self.cur_table = str(event.value)
+        if event.value:
+            self.cur_table = str(event.value)
 
-    """
-    def delete_row(self, res):
-        if res == "yes":
-            table = self.query_one(DataTable)
-
-            row_id = int(table.get_row_at(table.cursor_row)[0])               
-           
-            try:
-                rows_deleted = crud.delete(self.cur_table, row_id)
-                self.notify(f"{rows_deleted} linhas deletadas")
-            except Exception as e:
-                self.notify(str(e), severity="error", timeout=7)
-            
-            cursor_pos = table.cursor_coordinate
-            self.query_bd()
-            table.cursor_coordinate = cursor_pos
-    """
 
     def delete_row(self, res):
         if res == "yes":
@@ -119,8 +106,17 @@ class TableApp(App):
             column_names = [e[0] for e in self.info[self.cur_table]]
             table.add_columns(*column_names)
             table.add_rows(query_result)
+
+            self.table_not_empty = True
         except Exception as e:
             self.notify(str(e), severity="error", timeout=7)
+
+
+    def update_cell(self, value):
+        self.modal_active = False
+
+        if value:
+            self.notify(value)
         
 
     def on_key(self, event):
@@ -130,12 +126,24 @@ class TableApp(App):
             self.notify("Buscando resultados...", timeout=1)
             self.query_bd()
 
-        elif event.key == "u":
-            pass
-            # update!
+        elif event.key == "u" and not self.modal_active:
+            if self.table_not_empty:
+                if self.cur_table == "subtypeexperiencecategorizesexperience" or \
+                    table.cursor_column == 0: # ID
+
+                    self.notify("Esse valor não pode ser modificado")
+                    return
+
+                old_value = table.get_cell_at(table.cursor_coordinate)
+                self.modal_active = True
+                self.push_screen(
+                    UpdateModal("Teste", str, str(old_value)),
+                    self.update_cell
+                )
    
-        elif event.key == "d":
-            table.cursor_type = "row"  
+        elif event.key == "d" and not self.modal_active:
+            table.cursor_type = "row"
+            self.modal_active = True
             self.push_screen(
                 ConfirmationDialog(
                     "Tem certeza de que quer deletar a linha?",
