@@ -110,7 +110,7 @@ class TableApp(App):
             column_index = table.cursor_column
             column_name = crud.get_columns(self.cur_table)[column_index]
             try:
-                crud.create_index(self.cur_table, column_names=[column_name], unique=True)
+                crud.create_index(self.cur_table, column_names=[column_name], unique=False)
                 self.notify(f"Índice criado para coluna '{column_name}'", severity="info")
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)

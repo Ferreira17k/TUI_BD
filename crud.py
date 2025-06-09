@@ -1,5 +1,7 @@
 import psycopg2
 from psycopg2.extensions import connection as PGConnection
+from psycopg2.extras import execute_values
+
 
 def get_connection() -> PGConnection:
     return psycopg2.connect(
@@ -229,6 +231,72 @@ def create_index(table_name, column_names, index_name=None, unique=False, schema
     cursor.execute(query)
     conn.commit()
     cursor.close()
+    conn.close()
+
+
+
+def insert_many0(table_name, list_dicio, schema='public'):
+    """
+    Insere múltiplos registros em uma tabela.
+
+    Args:
+        table_name (str): Nome da tabela de destino.
+        list_dicio (list of dict): Lista de dicionários com os dados a serem inseridos.
+        schema (str): Nome do schema da tabela (padrão: 'public').
+    """
+    if not list_dicio:
+        return  # Não há dados para inserir
+
+    conn = get_connection()
+    colunas = get_columns(table_name=table_name, schema=schema)
+
+    # Garante que todas as colunas usadas estão nos dicionários
+    campos = [col for col in colunas if any(col in d for d in list_dicio)]
+    
+    # Extrai os valores em ordem para cada dicionário
+    valores = [[d.get(c) for c in campos] for d in list_dicio]
+
+    campos_str = ', '.join(campos)
+    query = f"INSERT INTO {schema}.{table_name} ({campos_str}) VALUES %s ON CONFLICT DO NOTHING;"
+
+    with conn.cursor() as cur:
+        execute_values(cur, query, valores)
+        conn.commit()
+    conn.close()
+
+
+def insert_many(table_name, list_dicio, schema='public'):
+    """
+    Insere múltiplos registros em uma tabela, um por um, ignorando erros em linhas individuais.
+
+    Args:
+        table_name (str): Nome da tabela de destino.
+        list_dicio (list of dict): Lista de dicionários com os dados a serem inseridos.
+        schema (str): Nome do schema da tabela (padrão: 'public').
+    """
+    if not list_dicio:
+        return  # Nada para inserir
+
+    conn = get_connection()
+    colunas = get_columns(table_name=table_name, schema=schema)
+
+    with conn.cursor() as cur:
+        for index, d in enumerate(list_dicio):
+            # Filtra apenas as colunas válidas
+            campos = [col for col in colunas if col in d]
+            valores = [d[c] for c in campos]
+
+            placeholders = ', '.join(['%s'] * len(campos))
+            campos_str = ', '.join(campos)
+            query = f"INSERT INTO {schema}.{table_name} ({campos_str}) VALUES ({placeholders}) ON CONFLICT DO NOTHING;"
+            if index % 1000 == 0 and index != 0:
+                conn.commit()        
+            try:
+                cur.execute(query, valores)
+            except Exception as e:
+                print(f"[ERRO] Falha ao inserir linha em {table_name}: {e}")
+                continue  # pula para o próximo
+        conn.commit()
     conn.close()
 
 
