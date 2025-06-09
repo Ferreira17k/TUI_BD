@@ -1,8 +1,10 @@
+from textual import on
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Grid, Horizontal, Vertical
-from textual.validation import Validator
 from textual.widgets import Label, Button, Input
+from input_field import input_field
+from datetime import datetime
 
 
 class InsertModal(ModalScreen[list]):
@@ -64,20 +66,24 @@ class InsertModal(ModalScreen[list]):
     
 
     def compose(self) -> ComposeResult:
-
         self.column_names  = [e[0] for e in self.info] # lista de strings dos nomes das colunas
         self.column_types = [e[1] for e in self.info] # lista dos tipos das variáveis
         self.column_options = [e[2] for e in self.info] # True = opcional False = obrigatório
         
         field_pairs = []
         for name, optional, type in zip(self.column_names, self.column_options, self.column_types):
-            label_text = f"{name} {'(opcional)' if optional else '*'}"
-            input_field = Input(placeholder=f"Digite o valor ({type})...", classes="field-input")
-            self.inputs.append(input_field)
+            label_text = f"\n{name} {'(opcional)' if optional else '*'}"
+            field = input_field("", type)
+            field.placeholder = f"Digite o valor ({type})..."
+            field.add_class("field-input")
+            field.valid_empty = optional
+            field.validate("")
+
+            self.inputs.append(field)
             field_pairs.append(
                 Horizontal(
                     Label(label_text, classes="field-label"),
-                    input_field,
+                    field,
                     classes="field-pair"
                 )
             )
@@ -90,6 +96,11 @@ class InsertModal(ModalScreen[list]):
             Button(self.btn_no, variant="primary", id="no"),
             id="dialog",
         )
+
+
+    @on(Input.Changed)
+    def input_changed(self, event: Input.Changed):
+        self.query_one("#yes").disabled = any([not i.is_valid for i in self.inputs])
         
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "yes":
@@ -99,7 +110,17 @@ class InsertModal(ModalScreen[list]):
                 raw_value = input_field.value.strip()
     
                 if tipo == "integer":
-                    valores.append(int(raw_value))
+                    if raw_value == "":
+                        valores.append(None)
+                    else:
+                        valores.append(int(raw_value))
+
+                elif tipo == "date":
+                    if raw_value == "":
+                        valores.append(None)
+                    else:
+                        valores.append(datetime.strptime(raw_value, '%Y-%m-%d'))
+                    
                 else:
                     valores.append(raw_value)
 

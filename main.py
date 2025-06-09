@@ -52,6 +52,7 @@ class TableApp(App):
 
 
     def modal_insert(self, values):
+        self.modal_active = False
 
         if values[0] == "no":
             return
@@ -88,8 +89,13 @@ class TableApp(App):
             for index, column in enumerate(columns):
                 dicio[column] = row_values[index]          
             try:
-                crud.delete_2(self.cur_table, dicio)
-                self.notify("1 linha deletadas")
+                if self.cur_table == "subtypeexperiencecategorizesexperience":
+                    crud.delete_2(self.cur_table, dicio)
+                    self.notify("1 linha deletada")
+                else:
+                    row_id = int(table.get_row_at(table.cursor_row)[0])
+                    rows_deleted = crud.delete(self.cur_table, row_id)
+                    self.notify(f"{rows_deleted} linha deletada")
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)
             
@@ -200,7 +206,7 @@ class TableApp(App):
                 self.delete_row
             )
 
-        elif event.key == "x":
+        elif event.key == "x" and not self.modal_active:
             table.cursor_type = "column"
             self.modal_active = True
             self.push_screen(
@@ -215,8 +221,8 @@ class TableApp(App):
         elif event.key == "q":
             self.exit()
 
-
-        elif event.key == "i" and self.info is not None:
+        elif event.key == "i" and self.table_not_empty and not self.modal_active:
+            self.modal_active = True
             self.push_screen(
                 InsertModal(
                     "Tem certeza de que quer inserir a linha?",
