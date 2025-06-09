@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     n = 100000
-    k = 10000 + 10000
+    k = 60000 
     # Geração principal
     dados_userprofile = gerar_userprofile(n=n, k=k)
     dados_experience = gerar_experience(n=n, k=k)

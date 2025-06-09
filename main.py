@@ -238,6 +238,9 @@ class TableApp(App):
                 ),
                 self.modal_insert
             )
+        
+        elif event.key == "k":
+            self.notify(crud.see_time())
             
    
 if __name__ == "__main__":

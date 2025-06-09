@@ -300,5 +300,13 @@ def insert_many(table_name, list_dicio, schema='public'):
     conn.close()
 
 
+def see_time():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("EXPLAIN ANALYZE select * from review order by date;")
+            return(cur.fetchall()[-1][0])
+
+
+
 if __name__ == "__main__":
-    print(get_info().keys())
+    print(see_time())
