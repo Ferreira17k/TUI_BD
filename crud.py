@@ -188,4 +188,4 @@ def select(query: str):
 
 
 if __name__ == "__main__":
-    print(get_info())
+    print(get_info().keys())
