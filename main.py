@@ -5,6 +5,7 @@ from textual.containers import Vertical, Horizontal
 import crud
 from confirmation_dialog import ConfirmationDialog
 from update_modal import UpdateModal
+from time import time
 
 
 TABLE_NAMES = ["experience", "experiencepicture", "review", "reviewpicture", "schedule", "subtypeexperience", "subtypeexperiencecategorizesexperience", "userprofile"]
@@ -49,6 +50,10 @@ class TableApp(App):
 
 
     def delete_row(self, res):
+        self.modal_active = False
+
+        self.query_one(DataTable).cursor_type = "cell"
+
         if res == "yes":
             table = self.query_one(DataTable)
 
@@ -63,15 +68,11 @@ class TableApp(App):
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)
             
-            cursor_pos = table.cursor_coordinate
-            self.query_bd()
-        
-            # reset cursor selection
-            table.cursor_type = "cell"
-            table.cursor_coordinate = cursor_pos
+            self.query_bd(keep_scroll=True)
 
 
     def create_index(self, res):
+        self.modal_active = False
         table = self.query_one(DataTable)
 
         if res == "yes":
@@ -83,48 +84,69 @@ class TableApp(App):
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)
         
-                    # reset cursor selection
         table.cursor_type = "cell"
 
 
-    def query_bd(self):
+    def query_bd(self, keep_scroll=False):
         table = self.query_one(DataTable)
         where = self.query_one("#where-input")
+
+        if not self.info:
+            self.info = crud.get_info()
+
+        column_names = [e[0] for e in self.info[self.cur_table]]
 
         query = f"SELECT * FROM {self.cur_table}"
         if where.value != "":
             query += " WHERE " + where.value
 
-        if not self.info:
-            self.info = crud.get_info()
+        query += " ORDER BY " + column_names[0]
 
         try:
             query_result = crud.select(query)
 
+            scroll = table.scroll_offset
+            cursor_pos = table.cursor_coordinate
+
             # Limpa o estado atual da tabela e o redefine
             table.clear(columns=True)
-            column_names = [e[0] for e in self.info[self.cur_table]]
             table.add_columns(*column_names)
             table.add_rows(query_result)
+
+            if keep_scroll:
+                table.cursor_coordinate = cursor_pos
+                table.set_scroll(scroll.x, scroll.y)
 
             self.table_not_empty = True
         except Exception as e:
             self.notify(str(e), severity="error", timeout=7)
 
 
-    def update_cell(self, value):
+    def update_cell(self, info):
+        table = self.query_one(DataTable)
+
         self.modal_active = False
 
-        if value:
-            self.notify(value)
+        if info == "cancel":
+            return
+        
+        field_name, value = info
+        id = int(table.get_row_at(table.cursor_row)[0])
+
+        try:
+            crud.update(self.cur_table, id, field_name, [value])
+            self.query_bd(keep_scroll=True)
+        except Exception as e:
+            self.notify(str(e), severity="error", timeout=7)
         
 
     def on_key(self, event):
         table = self.query_one(DataTable)
     
         if event.key == "r":
-            self.notify("Buscando resultados...", timeout=1)
+            start = time()
             self.query_bd()
+            self.notify(f"Tabela atualizada ({time() - start:.1f}s)", timeout=3)
 
         elif event.key == "u" and not self.modal_active:
             if self.table_not_empty:
@@ -134,10 +156,11 @@ class TableApp(App):
                     self.notify("Esse valor não pode ser modificado")
                     return
 
+                col = self.info[self.cur_table][table.cursor_column]
                 old_value = table.get_cell_at(table.cursor_coordinate)
                 self.modal_active = True
                 self.push_screen(
-                    UpdateModal("Teste", str, str(old_value)),
+                    UpdateModal(col, str(old_value)),
                     self.update_cell
                 )
    
@@ -151,10 +174,10 @@ class TableApp(App):
                 ),
                 self.delete_row
             )
-            table.cursor_type = "cell"
 
         elif event.key == "x":
             table.cursor_type = "column"
+            self.modal_active = True
             self.push_screen(
                 ConfirmationDialog(
                     "Tem certeza de que quer criar um índice?",

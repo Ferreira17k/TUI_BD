@@ -3,6 +3,8 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Grid
 from textual.widgets import Label, Button, Input
+from datetime import datetime
+from input_field import input_field
 
 
 class UpdateModal(ModalScreen[str]):
@@ -29,11 +31,11 @@ class UpdateModal(ModalScreen[str]):
         width: 100%;
     }
 
-    #field-value {
+    Input {
         width: 100%;
     }
 
-    #field-value.empty {
+    Input.empty {
       color: tomato;
     }
 
@@ -48,10 +50,8 @@ class UpdateModal(ModalScreen[str]):
     """
 
 
-    def __init__(self, field_name: str, field_type, old_value):
-        self.field_name = field_name
-        self.field_type = field_type
-        self.old_value = old_value
+    def __init__(self, column, old_value):
+        self.field_name, self.field_type, self.field_optional = column
         self.value = old_value
         super().__init__()
 
@@ -60,8 +60,8 @@ class UpdateModal(ModalScreen[str]):
         yield Grid(
             Grid(
                 Label(f"\n{self.field_name}:"),
-                Input(self.old_value, placeholder="Novo valor", id="field-value"),
-                Button("X", variant="error", id="clear"),
+                input_field(self.value, self.field_type),
+                Button("X", variant="error", id="clear", disabled = not self.field_optional),
                 id = "field"
             ),
             Button("Confirmar", variant="primary", id="confirm"),
@@ -80,16 +80,23 @@ class UpdateModal(ModalScreen[str]):
         else:
             self.value = str(event.value)
 
+        self.query_one("#confirm").disabled = not event.input.is_valid
+
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
         action = event.button.id
 
         if action == "confirm":
-            self.dismiss(self.value)
+            if self.field_type == "date":
+                self.value = datetime.strptime(self.value, '%Y-%m-%d')
+            elif self.field_type == "integer":
+                self.value = int(self.value)
+
+            self.dismiss((self.field_name, self.value))
         elif action == "cancel":
-            self.dismiss(None)
+            self.dismiss("cancel")
         else: # action == "clear"
-            input = self.query_one("#field-value")
+            input = self.query_one(Input)
             input.value = "[VAZIO]"
             self.value = None
 
