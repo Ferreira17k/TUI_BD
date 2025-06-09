@@ -181,7 +181,8 @@ class TableApp(App):
     
         if event.key == "r":
             duration = self.query_bd()
-            self.notify(f"Tabela atualizada ({duration:.1f}s)", timeout=3)
+            if duration:
+                self.notify(f"Tabela atualizada ({duration:.1f}s)", timeout=3)
 
         elif event.key == "u" and not self.modal_active:
             if self.table_not_empty:
