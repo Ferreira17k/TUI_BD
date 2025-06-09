@@ -46,11 +46,10 @@ def delete(table_name, id, schema='public'):
 
     with conn.cursor() as cur:
         cur.execute(query, valores)
-        if cur.rowcount == 0:
-            print(f"Nenhuma linha foi deletada. ID {id} não foi encontrado.")
-        else:
+        if cur.rowcount != 0:
             conn.commit()
-            print(f"{cur.rowcount} linha(s) deletada(s) com sucesso.")
+
+        return cur.rowcount
 
 
 def insert(table_name, dicio, schema='public'):
@@ -179,31 +178,6 @@ def get_info(schema='public'):
     finally:
         conn.close()
 
-
-# Exemplo de uso:
-dicio = {
-    'idexperience': 30,
-    'name': "cachorro feliz",
-    'experiencetype': "animal",
-    'description': "Um cachorro muito feliz",
-    'siteaddress': "Não",
-    'phonenumber': "21234",
-    'email': "blablabla@email.com",
-}
-
-
-
-table_name = 'experience'
-
-# insert(table_name='experience', dicio=dicio, schema='public')
-
-values_dicio = {
-    'name': "GAGAGAGAGGAGAGA",
-    'description': "Um cachorro muito feliz@ED",
-}
-
-# update(table_name, 30, values_dicio)
-# delete(table_name=table_name, id=30)
 
 if __name__ == "__main__":
     print(get_info())

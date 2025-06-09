@@ -2,7 +2,6 @@ from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Label, Input
 from textual.containers import Vertical
 import crud
-
 from confirmation_dialog import ConfirmationDialog
 
 
@@ -83,26 +82,25 @@ class TableApp(App):
         if res == "yes":
             table = self.query_one(DataTable)
 
-            selected_row = table.get_row_at(table.cursor_row)
-            row_id = int(selected_row[0])               
+            row_id = int(table.get_row_at(table.cursor_row)[0])               
            
-            try:  
-                crud.delete(self.cur_table, row_id)
+            try:
+                rows_deleted = crud.delete(self.cur_table, row_id)
+                self.notify(f"{rows_deleted} linhas deletadas")
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)
-                
-            coord = table.cursor_coordinate
+            
+            cursor_pos = table.cursor_coordinate
             table.clear(columns=True)
             dtable = self.make_table()
-                        
+            
             if dtable:
                 table.add_columns(*[e[0] for e in self.info[self.cur_table]])
                 table.add_rows(dtable)
         
-            self.confirming_delete = False
+            # reset cursor selection
             table.cursor_type = 'cell'
-
-            table.cursor_coordinate = coord
+            table.cursor_coordinate = cursor_pos
             
         
     def on_key(self, event):
@@ -118,7 +116,6 @@ class TableApp(App):
                 table.add_rows(dtable)
     
         elif event.key == "d":
-            self.confirming_delete = True
             table.cursor_type = "row"  
             self.push_screen(
                 ConfirmationDialog(
