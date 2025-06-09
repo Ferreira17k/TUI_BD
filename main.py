@@ -58,9 +58,6 @@ class TableApp(App):
             
             cursor_pos = table.cursor_coordinate
             self.query_bd()
-        
-            # reset cursor selection
-            table.cursor_type = "cell"
             table.cursor_coordinate = cursor_pos
 
 
@@ -93,20 +90,25 @@ class TableApp(App):
         if event.key == "r":
             self.notify("Buscando resultados...", timeout=1)
             self.query_bd()
+
+        elif event.key == "u":
+            pass
+            # update!
    
         elif event.key == "d":
             table.cursor_type = "row"  
             self.push_screen(
                 ConfirmationDialog(
                     "Tem certeza de que quer deletar a linha?",
-                    "Sim",
-                    "Não"
+                    "Sim", "Não"
                 ),
                 self.delete_row
             )
+            table.cursor_type = "cell"
 
         elif event.key == "x":
             table.cursor_type = "column"
+            # TODO: criar filtro aqui
 
         elif event.key == "q":
             self.exit()
