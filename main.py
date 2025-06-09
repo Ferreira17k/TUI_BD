@@ -133,6 +133,7 @@ class TableApp(App):
             query += " WHERE " + str(where.value)
 
         query += " ORDER BY " + column_names[0]
+        query += " LIMIT 100"
 
         try:
             start = time()
