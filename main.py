@@ -66,12 +66,11 @@ class TableApp(App):
                 dict[f'{key}'] = value
 
             try:
-                rows_insert = crud.insert(self.cur_table, dict)
-                self.notify(f"Linha inserida")
+                crud.insert(self.cur_table, dict)
+                self.notify("Linha inserida")
             except Exception as e:
                 self.notify(str(e), severity="error", timeout=7)
             
-            table = self.query_one(DataTable)
             self.query_bd(keep_scroll=True)
             
     
@@ -125,16 +124,20 @@ class TableApp(App):
         if not self.info:
             self.info = crud.get_info()
 
-        column_names = [e[0] for e in self.info[self.cur_table]]
+        column_names = [""]
+        if self.cur_table:
+            column_names = [e[0] for e in self.info[self.cur_table]]
 
-        query = f"SELECT * FROM {self.cur_table}"
+        query = f"SELECT * FROM {self.cur_table or ""}"
         if where.value != "":
             query += " WHERE " + str(where.value)
 
         query += " ORDER BY " + column_names[0]
 
         try:
+            start = time()
             query_result = crud.select(query)
+            end = time()
 
             scroll = table.scroll_offset
             cursor_pos = table.cursor_coordinate
@@ -149,6 +152,8 @@ class TableApp(App):
                 table.set_scroll(scroll.x, scroll.y)
 
             self.table_not_empty = True
+
+            return end - start
         except Exception as e:
             self.notify(str(e), severity="error", timeout=7)
 
@@ -175,9 +180,9 @@ class TableApp(App):
         table = self.query_one(DataTable)
     
         if event.key == "r":
-            start = time()
-            self.query_bd()
-            self.notify(f"Tabela atualizada ({time() - start:.1f}s)", timeout=3)
+            duration = self.query_bd()
+            if duration:
+                self.notify(f"Tabela atualizada ({duration:.1f}s)", timeout=3)
 
         elif event.key == "u" and not self.modal_active:
             if self.table_not_empty:
