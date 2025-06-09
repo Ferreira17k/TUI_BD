@@ -1,8 +1,10 @@
+from typing import cast
 from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import DataTable, Label, Input, Select
 from textual.containers import Vertical, Horizontal
 import crud
+from insert_modal import InsertModal 
 from confirmation_dialog import ConfirmationDialog
 from update_modal import UpdateModal
 from time import time
@@ -49,6 +51,29 @@ class TableApp(App):
             self.cur_table = str(event.value)
 
 
+    def modal_insert(self, values):
+
+        if values[0] == "no":
+            return
+        else:
+            dict = {}
+            if self.info is None:
+                self.info = crud.get_info()
+                
+            column_names = [e[0] for e in self.info[self.cur_table]]
+            for key, value in zip(column_names ,values):
+                dict[f'{key}'] = value
+
+            try:
+                rows_insert = crud.insert(self.cur_table, dict)
+                self.notify(f"Linha inserida")
+            except Exception as e:
+                self.notify(str(e), severity="error", timeout=7)
+            
+            table = self.query_one(DataTable)
+            self.query_bd(keep_scroll=True)
+            
+    
     def delete_row(self, res):
         self.modal_active = False
 
@@ -89,7 +114,7 @@ class TableApp(App):
 
     def query_bd(self, keep_scroll=False):
         table = self.query_one(DataTable)
-        where = self.query_one("#where-input")
+        where = cast(Select, self.query_one("#where-input"))
 
         if not self.info:
             self.info = crud.get_info()
@@ -98,7 +123,7 @@ class TableApp(App):
 
         query = f"SELECT * FROM {self.cur_table}"
         if where.value != "":
-            query += " WHERE " + where.value
+            query += " WHERE " + str(where.value)
 
         query += " ORDER BY " + column_names[0]
 
@@ -191,6 +216,18 @@ class TableApp(App):
             self.exit()
 
 
+        elif event.key == "i" and self.info is not None:
+            self.push_screen(
+                InsertModal(
+                    "Tem certeza de que quer inserir a linha?",
+                    "Sim",
+                    "Não",
+                    self.info[self.cur_table]
+                ),
+                self.modal_insert
+            )
+            
+   
 if __name__ == "__main__":
     app = TableApp()
     app.run()
