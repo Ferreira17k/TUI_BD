@@ -20,3 +20,8 @@ Para rodar o projeto:
 ```
 python main.py
 ```
+
+Índice que usamos para melhorar a performance do programa, no caso onde o usuário queira pesquisar reviews ordenadas por data por exemplo:
+```
+CREATE INDEX review_date_idx ON review(date);
+```
