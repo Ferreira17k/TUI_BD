@@ -1,4 +1,4 @@
-# TUI_BD
+# TUI-BD: TripAdvisor admin interface
 ![image](https://github.com/user-attachments/assets/728e5cfa-7350-4a55-8f91-997181576feb)
 
 **Motivação:** criar uma solução diferente e criativa coma a finalidade
