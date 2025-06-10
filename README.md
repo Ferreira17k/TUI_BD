@@ -17,11 +17,11 @@ inserção, atualização e remoção!
 ![image](https://github.com/user-attachments/assets/11c2e870-05d4-4eba-8a68-b543e8edc01d)
 
 Para rodar o projeto:
-```
+```bash
 python main.py
 ```
 
 Índice que usamos para melhorar a performance do programa, no caso onde o usuário queira pesquisar reviews ordenadas por data por exemplo:
-```
+```sql
 CREATE INDEX review_date_idx ON review(date);
 ```
