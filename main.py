@@ -128,7 +128,7 @@ class TableApp(App):
         if self.cur_table:
             column_names = [e[0] for e in self.info[self.cur_table]]
 
-        query = f"SELECT * FROM {self.cur_table or ""}"
+        query = f"SELECT * FROM {self.cur_table or ''}"
         if where.value != "":
             query += " WHERE " + str(where.value)
 
